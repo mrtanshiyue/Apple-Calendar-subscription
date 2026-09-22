@@ -8,7 +8,7 @@
 - `worker/index.js` 提供日历创建、日期增删改和 `.ics` 输出接口；
 - `_worker.js` 将 `/api/*` 请求交给日历 Worker，其余请求交给 Pages 静态资源；
 - `wrangler.jsonc` 绑定了独立的 Cloudflare KV 命名空间；
-- Worker 会把农历生日转换为未来 10 年的公历事件；法定节假日同步还需要接入下一步的官方数据源。
+- Worker 会把农历生日转换为未来 10 年的公历事件，并为新订阅（以及旧订阅首次访问时迁移）加入美国主要节日、BFCM 购物节点和长辈礼赠节日。Prime Day 与 Prime Big Deal Days 因日期由 Amazon 每年公布，暂不写入固定日历。
 
 ## 本地预览
 

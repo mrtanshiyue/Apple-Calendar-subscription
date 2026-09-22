@@ -1,8 +1,32 @@
-const seedEvents = [
+const demoEvents = [
   { id: 1, name: '妈妈生日', dateType: 'lunar', month: '八月', day: '初八', date: '2026-09-19', note: '记得提前订花', tag: '农历生日', color: 'birthday' },
   { id: 2, name: '国庆节', dateType: 'holiday', month: '', day: '', date: '2026-10-01', note: '放假 7 天 · 10 月 10 日补班', tag: '法定节假日', color: 'holiday' },
   { id: 3, name: '外婆生日', dateType: 'lunar', month: '九月', day: '廿三', date: '2026-11-03', note: '农历九月廿三', tag: '农历生日', color: 'birthday' },
 ];
+
+const defaultUsEvents = [
+  { id: 'us-new-years-day', name: '美国元旦', date: '2026-01-01', note: '美国主要节日', tag: '美国节日', color: 'holiday' },
+  { id: 'us-mlk-day', name: '马丁·路德·金纪念日', date: '2026-01-19', note: '一月第三个星期一', tag: '美国节日', color: 'holiday' },
+  { id: 'us-valentines-day', name: '情人节', date: '2026-02-14', note: '礼品购物节点', tag: '美国节日', color: 'holiday' },
+  { id: 'us-presidents-day', name: '总统日（华盛顿诞辰）', date: '2026-02-16', note: '二月第三个星期一', tag: '美国节日', color: 'holiday' },
+  { id: 'us-easter', name: '复活节', date: '2026-04-05', note: '春季主要节日', tag: '美国节日', color: 'holiday' },
+  { id: 'us-memorial-day', name: '阵亡将士纪念日', date: '2026-05-25', note: '五月最后一个星期一', tag: '美国节日', color: 'holiday' },
+  { id: 'us-mothers-day', name: '母亲节', date: '2026-05-10', note: '五月第二个星期日 · 长辈礼赠节点', tag: '礼赠节日', color: 'holiday' },
+  { id: 'us-fathers-day', name: '父亲节', date: '2026-06-21', note: '六月第三个星期日 · 长辈礼赠节点', tag: '礼赠节日', color: 'holiday' },
+  { id: 'us-juneteenth', name: '六月节', date: '2026-06-19', note: '美国联邦节日', tag: '美国节日', color: 'holiday' },
+  { id: 'us-independence-day', name: '美国独立日', date: '2026-07-04', note: '美国联邦节日', tag: '美国节日', color: 'holiday' },
+  { id: 'us-labor-day', name: '劳动节', date: '2026-09-07', note: '九月第一个星期一', tag: '美国节日', color: 'holiday' },
+  { id: 'us-grandparents-day', name: '祖父母节', date: '2026-09-13', note: '劳动节后的第一个星期日 · 长辈礼赠节点', tag: '礼赠节日', color: 'holiday' },
+  { id: 'us-columbus-day', name: '哥伦布日 / 原住民日', date: '2026-10-12', note: '十月第二个星期一', tag: '美国节日', color: 'holiday' },
+  { id: 'us-halloween', name: '万圣节', date: '2026-10-31', note: '美国主要节日', tag: '美国节日', color: 'holiday' },
+  { id: 'us-veterans-day', name: '退伍军人节', date: '2026-11-11', note: '美国联邦节日', tag: '美国节日', color: 'holiday' },
+  { id: 'us-thanksgiving', name: '感恩节', date: '2026-11-26', note: '十一月第四个星期四 · BFCM 购物季开始', tag: '购物节点', color: 'holiday' },
+  { id: 'us-black-friday', name: '黑色星期五', date: '2026-11-27', note: '感恩节次日 · 年度重点购物日', tag: '购物节点', color: 'holiday' },
+  { id: 'us-cyber-monday', name: '网络星期一', date: '2026-11-30', note: '感恩节后的星期一 · 线上购物节点', tag: '购物节点', color: 'holiday' },
+  { id: 'us-christmas', name: '圣诞节', date: '2026-12-25', note: '冬季主要节日 · 长辈礼赠节点', tag: '礼赠节日', color: 'holiday' },
+];
+
+const seedEvents = [...demoEvents, ...defaultUsEvents];
 
 const API_BASE = window.SUISHI_API_BASE || '';
 let calendarToken = localStorage.getItem('suishi-calendar-token') || '';
@@ -20,7 +44,10 @@ const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)]
 function loadEvents() {
   try {
     const saved = localStorage.getItem('suishi-events');
-    return saved ? JSON.parse(saved) : seedEvents;
+    if (!saved) return seedEvents;
+    const events = JSON.parse(saved);
+    const existingIds = new Set(events.map((event) => event.id));
+    return [...events, ...defaultUsEvents.filter((event) => !existingIds.has(event.id))];
   } catch {
     return seedEvents;
   }
@@ -98,6 +125,9 @@ async function syncEventToRemote(event) {
       day: event.day,
       note: event.note,
       tag: event.tag,
+      color: event.color,
+      repeatAnnual: event.repeatAnnual,
+      annualRule: event.annualRule,
     }),
   });
   event.remoteId = payload.event.id;

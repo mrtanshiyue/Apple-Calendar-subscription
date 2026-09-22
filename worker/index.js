@@ -7,6 +7,7 @@ const JSON_HEADERS = {
 };
 
 const CALENDAR_PREFIX = 'calendar:';
+const CALENDAR_VERSION = 2;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const LUNAR_MONTHS = ['正月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '冬月', '腊月'];
 const LUNAR_DAYS = {
@@ -14,6 +15,30 @@ const LUNAR_DAYS = {
   十一: 11, 十二: 12, 十三: 13, 十四: 14, 十五: 15, 十六: 16, 十七: 17, 十八: 18, 十九: 19, 二十: 20,
   廿一: 21, 廿二: 22, 廿三: 23, 廿四: 24, 廿五: 25, 廿六: 26, 廿七: 27, 廿八: 28, 廿九: 29, 三十: 30,
 };
+
+// These are stable annual dates and relative holidays. Prime Day events are
+// intentionally omitted because Amazon announces their dates each year.
+const DEFAULT_US_EVENT_DEFINITIONS = [
+  { id: 'us-new-years-day', name: '美国元旦', rule: { type: 'fixed', month: 1, day: 1 }, note: '美国主要节日', tag: '美国节日' },
+  { id: 'us-mlk-day', name: '马丁·路德·金纪念日', rule: { type: 'nth-weekday', month: 1, weekday: 1, nth: 3 }, note: '一月第三个星期一', tag: '美国节日' },
+  { id: 'us-valentines-day', name: '情人节', rule: { type: 'fixed', month: 2, day: 14 }, note: '礼品购物节点', tag: '美国节日' },
+  { id: 'us-presidents-day', name: '总统日（华盛顿诞辰）', rule: { type: 'nth-weekday', month: 2, weekday: 1, nth: 3 }, note: '二月第三个星期一', tag: '美国节日' },
+  { id: 'us-easter', name: '复活节', rule: { type: 'easter', offset: 0 }, note: '春季主要节日', tag: '美国节日' },
+  { id: 'us-memorial-day', name: '阵亡将士纪念日', rule: { type: 'last-weekday', month: 5, weekday: 1 }, note: '五月最后一个星期一', tag: '美国节日' },
+  { id: 'us-mothers-day', name: '母亲节', rule: { type: 'nth-weekday', month: 5, weekday: 0, nth: 2 }, note: '五月第二个星期日 · 长辈礼赠节点', tag: '礼赠节日' },
+  { id: 'us-fathers-day', name: '父亲节', rule: { type: 'nth-weekday', month: 6, weekday: 0, nth: 3 }, note: '六月第三个星期日 · 长辈礼赠节点', tag: '礼赠节日' },
+  { id: 'us-juneteenth', name: '六月节', rule: { type: 'fixed', month: 6, day: 19 }, note: '美国联邦节日', tag: '美国节日' },
+  { id: 'us-independence-day', name: '美国独立日', rule: { type: 'fixed', month: 7, day: 4 }, note: '美国联邦节日', tag: '美国节日' },
+  { id: 'us-labor-day', name: '劳动节', rule: { type: 'nth-weekday', month: 9, weekday: 1, nth: 1 }, note: '九月第一个星期一', tag: '美国节日' },
+  { id: 'us-grandparents-day', name: '祖父母节', rule: { type: 'grandparents-day' }, note: '劳动节后的第一个星期日 · 长辈礼赠节点', tag: '礼赠节日' },
+  { id: 'us-columbus-day', name: '哥伦布日 / 原住民日', rule: { type: 'nth-weekday', month: 10, weekday: 1, nth: 2 }, note: '十月第二个星期一', tag: '美国节日' },
+  { id: 'us-halloween', name: '万圣节', rule: { type: 'fixed', month: 10, day: 31 }, note: '美国主要节日', tag: '美国节日' },
+  { id: 'us-veterans-day', name: '退伍军人节', rule: { type: 'fixed', month: 11, day: 11 }, note: '美国联邦节日', tag: '美国节日' },
+  { id: 'us-thanksgiving', name: '感恩节', rule: { type: 'nth-weekday', month: 11, weekday: 4, nth: 4 }, note: '十一月第四个星期四 · BFCM 购物季开始', tag: '购物节点' },
+  { id: 'us-black-friday', name: '黑色星期五', rule: { type: 'after-thanksgiving', offset: 1 }, note: '感恩节次日 · 年度重点购物日', tag: '购物节点' },
+  { id: 'us-cyber-monday', name: '网络星期一', rule: { type: 'after-thanksgiving', offset: 4 }, note: '感恩节后的星期一 · 线上购物节点', tag: '购物节点' },
+  { id: 'us-christmas', name: '圣诞节', rule: { type: 'fixed', month: 12, day: 25 }, note: '冬季主要节日 · 长辈礼赠节点', tag: '礼赠节日' },
+];
 
 export default {
   async fetch(request, env) {
@@ -64,11 +89,12 @@ export default {
 async function createCalendar(request, env) {
   const input = await readJson(request);
   const token = createToken();
+  const currentYear = new Date().getUTCFullYear();
   const calendar = {
-    version: 1,
+    version: CALENDAR_VERSION,
     token,
     name: cleanText(input.name || '我的岁时日历', 80),
-    events: [],
+    events: buildDefaultEvents(currentYear),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -158,7 +184,7 @@ function makeIcs(calendar) {
         `DTSTART;VALUE=DATE:${start}`,
         `DTEND;VALUE=DATE:${end}`,
         `SUMMARY:${escapeIcs(event.name)}`,
-        event.repeatAnnual && event.dateType === 'solar' ? 'RRULE:FREQ=YEARLY' : '',
+        event.repeatAnnual && !event.annualRule && event.dateType === 'solar' ? 'RRULE:FREQ=YEARLY' : '',
         description ? `DESCRIPTION:${escapeIcs(description)}` : '',
         'END:VEVENT',
       );
@@ -189,14 +215,22 @@ function normalizeEvent(input) {
     lunarMonth,
     lunarDay,
     lunarLeap,
+    annualRule: normalizeAnnualRule(input.annualRule),
     repeatAnnual: input.repeatAnnual === undefined ? dateType === 'solar' : Boolean(input.repeatAnnual),
     note: cleanText(input.note, 240),
     tag: cleanText(input.tag, 40) || (dateType === 'lunar' ? '农历生日' : dateType === 'holiday' ? '法定节假日' : '公历日期'),
+    color: cleanText(input.color, 20) || (dateType === 'holiday' ? 'holiday' : 'birthday'),
     updatedAt: new Date().toISOString(),
   };
 }
 
 function eventOccurrences(event) {
+  if (event.annualRule) {
+    const year = new Date().getUTCFullYear();
+    return Array.from({ length: 10 }, (_, index) => annualRuleToDate(year + index, event.annualRule))
+      .filter(Boolean)
+      .map((date) => ({ date }));
+  }
   if (event.dateType === 'lunar' && event.lunarMonth && event.lunarDay) {
     const year = new Date().getUTCFullYear();
     return Array.from({ length: 10 }, (_, index) => lunarToSolar(year + index, event.lunarMonth, event.lunarDay, event.lunarLeap))
@@ -205,6 +239,86 @@ function eventOccurrences(event) {
   }
   if (event.date && DATE_PATTERN.test(event.date)) return [{ date: event.date }];
   return [];
+}
+
+function buildDefaultEvents(year) {
+  return DEFAULT_US_EVENT_DEFINITIONS.map((definition) => ({
+    ...normalizeEvent({
+      id: definition.id,
+      name: definition.name,
+      dateType: 'holiday',
+      date: annualRuleToDate(year, definition.rule),
+      annualRule: definition.rule,
+      repeatAnnual: false,
+      note: definition.note,
+      tag: definition.tag,
+      color: 'holiday',
+    }),
+    system: true,
+  }));
+}
+
+function normalizeAnnualRule(input) {
+  if (!input || typeof input !== 'object') return null;
+  const type = ['fixed', 'nth-weekday', 'last-weekday', 'easter', 'grandparents-day', 'after-thanksgiving'].includes(input.type) ? input.type : null;
+  if (!type) return null;
+  const month = Number(input.month);
+  const day = Number(input.day);
+  const weekday = Number(input.weekday);
+  const nth = Number(input.nth);
+  const offset = Number.isInteger(Number(input.offset)) ? Number(input.offset) : 0;
+  if (type === 'fixed' && (!Number.isInteger(month) || month < 1 || month > 12 || !Number.isInteger(day) || day < 1 || day > 31)) return null;
+  if (['nth-weekday', 'last-weekday'].includes(type) && (!Number.isInteger(month) || month < 1 || month > 12 || !Number.isInteger(weekday) || weekday < 0 || weekday > 6)) return null;
+  if (type === 'nth-weekday' && (!Number.isInteger(nth) || nth < 1 || nth > 5)) return null;
+  return { type, ...(type === 'fixed' ? { month, day } : {}), ...(['nth-weekday', 'last-weekday'].includes(type) ? { month, weekday } : {}), ...(type === 'nth-weekday' ? { nth } : {}), ...(type === 'easter' || type === 'after-thanksgiving' ? { offset } : {}) };
+}
+
+function annualRuleToDate(year, rule) {
+  if (!rule) return null;
+  if (rule.type === 'fixed') return dateString(year, rule.month, rule.day);
+  if (rule.type === 'nth-weekday') return nthWeekdayOfMonth(year, rule.month, rule.weekday, rule.nth);
+  if (rule.type === 'last-weekday') return lastWeekdayOfMonth(year, rule.month, rule.weekday);
+  if (rule.type === 'easter') return addDays(easterSunday(year), rule.offset || 0);
+  if (rule.type === 'grandparents-day') return addDays(nthWeekdayOfMonth(year, 9, 1, 1), 6);
+  if (rule.type === 'after-thanksgiving') return addDays(nthWeekdayOfMonth(year, 11, 4, 4), rule.offset || 0);
+  return null;
+}
+
+function dateString(year, month, day) {
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+    ? date.toISOString().slice(0, 10)
+    : null;
+}
+
+function nthWeekdayOfMonth(year, month, weekday, nth) {
+  const first = new Date(Date.UTC(year, month - 1, 1));
+  const delta = (weekday - first.getUTCDay() + 7) % 7;
+  return dateString(year, month, 1 + delta + (nth - 1) * 7);
+}
+
+function lastWeekdayOfMonth(year, month, weekday) {
+  const last = new Date(Date.UTC(year, month, 0));
+  const delta = (last.getUTCDay() - weekday + 7) % 7;
+  return dateString(year, month, last.getUTCDate() - delta);
+}
+
+function easterSunday(year) {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return dateString(year, month, day);
 }
 
 function lunarToSolar(year, monthName, dayName, leapMonth = false) {
@@ -232,7 +346,20 @@ function lunarToSolar(year, monthName, dayName, leapMonth = false) {
 async function getCalendar(env, token) {
   if (!isValidToken(token)) return null;
   const value = await env.CALENDARS.get(`${CALENDAR_PREFIX}${token}`, 'json');
-  return value && Array.isArray(value.events) ? value : null;
+  if (!value || !Array.isArray(value.events)) return null;
+  if ((value.version || 1) < CALENDAR_VERSION) {
+    const existingIds = new Set(value.events.map((event) => event.id));
+    const migratedEvents = buildDefaultEvents(new Date().getUTCFullYear()).filter((event) => !existingIds.has(event.id));
+    const migrated = {
+      ...value,
+      version: CALENDAR_VERSION,
+      events: [...value.events, ...migratedEvents],
+      updatedAt: new Date().toISOString(),
+    };
+    await saveCalendar(env, migrated);
+    return migrated;
+  }
+  return value;
 }
 
 async function saveCalendar(env, calendar) {
