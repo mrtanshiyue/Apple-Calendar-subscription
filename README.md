@@ -1,6 +1,6 @@
 # 岁时 · Apple Calendar Subscription
 
-一个面向中文用户的 Apple 日历订阅前端原型，用于管理农历生日、纪念日和中国节假日。
+一个面向中文用户的 Apple 日历订阅前端原型，用于管理农历生日、纪念日和中美主要节日。
 
 当前仓库已经包含 Cloudflare Worker API 和 Pages Advanced Mode 入口。前端仍然支持 `localStorage` 预览模式，部署后可以在同一个域名创建远程日历、保存日期并提供 `.ics` 订阅地址。
 
