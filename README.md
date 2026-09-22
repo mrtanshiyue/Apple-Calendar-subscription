@@ -2,10 +2,11 @@
 
 一个面向中文用户的 Apple 日历订阅前端原型，用于管理农历生日、纪念日和中国节假日。
 
-当前仓库已经包含 Cloudflare Worker API 骨架。前端仍然支持 `localStorage` 预览模式，接入 Worker 后可以创建远程日历、保存日期并提供 `.ics` 订阅地址。
+当前仓库已经包含 Cloudflare Worker API 和 Pages Advanced Mode 入口。前端仍然支持 `localStorage` 预览模式，部署后可以在同一个域名创建远程日历、保存日期并提供 `.ics` 订阅地址。
 
 - `app.js` 中的 `state.events` 是前端事件模型；
 - `worker/index.js` 提供日历创建、日期增删改和 `.ics` 输出接口；
+- `_worker.js` 将 `/api/*` 请求交给日历 Worker，其余请求交给 Pages 静态资源；
 - `wrangler.jsonc` 绑定了独立的 Cloudflare KV 命名空间；
 - 农历日期转公历、未来年份生成和法定节假日同步还需要接入下一步的后端计算与数据源。
 

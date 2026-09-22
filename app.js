@@ -4,7 +4,7 @@ const seedEvents = [
   { id: 3, name: '外婆生日', dateType: 'lunar', month: '九月', day: '廿三', date: '2026-11-03', note: '农历九月廿三', tag: '农历生日', color: 'birthday' },
 ];
 
-const API_BASE = window.SUISHI_API_BASE || 'https://suishi-calendar-api.tanshiyuesir.workers.dev';
+const API_BASE = window.SUISHI_API_BASE || '';
 let calendarToken = localStorage.getItem('suishi-calendar-token') || '';
 let subscriptionUrl = localStorage.getItem('suishi-subscription-url') || '';
 
