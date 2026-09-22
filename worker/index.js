@@ -7,7 +7,7 @@ const JSON_HEADERS = {
 };
 
 const CALENDAR_PREFIX = 'calendar:';
-const CALENDAR_VERSION = 3;
+const CALENDAR_VERSION = 4;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const LUNAR_MONTHS = ['正月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '冬月', '腊月'];
 const LUNAR_DAYS = {
@@ -349,7 +349,7 @@ function easterSunday(year) {
 }
 
 function lunarToSolar(year, monthName, dayName, leapMonth = false) {
-  const targetMonth = LUNAR_MONTHS.indexOf(String(monthName).replace(/^闰/, '')) + 1;
+  const targetMonth = lunarMonthNumber(monthName);
   const targetDay = LUNAR_DAYS[dayName] || Number(dayName);
   if (!targetMonth || !targetDay || targetDay > 30) return null;
 
@@ -363,11 +363,17 @@ function lunarToSolar(year, monthName, dayName, leapMonth = false) {
     const day = Number(parts.find((part) => part.type === 'day')?.value);
     const isLeapMonth = month.startsWith('闰');
     const normalizedMonth = month.replace(/^闰/, '');
-    if (LUNAR_MONTHS.indexOf(normalizedMonth) + 1 === targetMonth && day === targetDay && isLeapMonth === leapMonth) {
+    if (lunarMonthNumber(normalizedMonth) === targetMonth && day === targetDay && isLeapMonth === leapMonth) {
       return date.toISOString().slice(0, 10);
     }
   }
   return null;
+}
+
+function lunarMonthNumber(value) {
+  const normalized = String(value || '').replace(/^闰/, '');
+  const aliases = { 十一月: '冬月', 十二月: '腊月' };
+  return LUNAR_MONTHS.indexOf(aliases[normalized] || normalized) + 1;
 }
 
 async function getCalendar(env, token) {
@@ -380,13 +386,21 @@ async function getCalendar(env, token) {
     const migrated = {
       ...value,
       version: CALENDAR_VERSION,
-      events: [...value.events.map((event) => ({ ...event, category: normalizeCategory(event.category) || inferEventCategory(event) })), ...migratedEvents],
+      events: [...value.events.map((event) => migrateStoredEvent(event)), ...migratedEvents],
       updatedAt: new Date().toISOString(),
     };
     await saveCalendar(env, migrated);
     return migrated;
   }
   return value;
+}
+
+function migrateStoredEvent(event) {
+  const migrated = { ...event, category: normalizeCategory(event.category) || inferEventCategory(event) };
+  if (migrated.dateType === 'lunar' && migrated.lunarMonth && migrated.lunarDay && !migrated.date) {
+    migrated.date = lunarToSolar(new Date().getUTCFullYear(), migrated.lunarMonth, migrated.lunarDay, Boolean(migrated.lunarLeap));
+  }
+  return migrated;
 }
 
 async function saveCalendar(env, calendar) {
