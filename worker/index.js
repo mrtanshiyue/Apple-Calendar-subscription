@@ -449,7 +449,7 @@ function parseChinaHolidayIcs(text) {
 
   return parsed.flatMap((event, index) => {
     if (!event.start || !event.summary) return [];
-    const isWorkday = /补班|调休|工作日|上班/.test(`${event.summary} ${event.description || ''}`);
+    const isWorkday = /补班|调休|工作日|上班|[（(]班[）)]|班$/.test(`${event.summary} ${event.description || ''}`);
     const end = event.end && event.end > event.start ? event.end : addDays(event.start, 1);
     const dates = [];
     for (let date = event.start; date < end; date = addDays(date, 1)) dates.push(date);
