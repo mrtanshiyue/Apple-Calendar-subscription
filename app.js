@@ -4,6 +4,10 @@ const seedEvents = [
   { id: 3, name: '外婆生日', dateType: 'lunar', month: '九月', day: '廿三', date: '2026-11-03', note: '农历九月廿三', tag: '农历生日', color: 'birthday' },
 ];
 
+const API_BASE = window.SUISHI_API_BASE || 'https://suishi-calendar-api.tanshiyuesir.workers.dev';
+let calendarToken = localStorage.getItem('suishi-calendar-token') || '';
+let subscriptionUrl = localStorage.getItem('suishi-subscription-url') || '';
+
 const state = {
   events: loadEvents(),
   activeView: 'overview',
@@ -24,6 +28,82 @@ function loadEvents() {
 
 function persistEvents() {
   localStorage.setItem('suishi-events', JSON.stringify(state.events));
+}
+
+async function apiRequest(path, options = {}) {
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: { 'content-type': 'application/json', ...(options.headers || {}) },
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error || `请求失败（${response.status}）`);
+  return payload;
+}
+
+function updateSubscriptionUrl(url = subscriptionUrl) {
+  subscriptionUrl = url;
+  if (url) {
+    localStorage.setItem('suishi-subscription-url', url);
+    $('#subscription-url').textContent = url;
+  } else {
+    $('#subscription-url').textContent = '连接后生成订阅链接';
+  }
+}
+
+function setConnectionStatus(label, connected = false) {
+  const status = $('.sync-status');
+  if (!status) return;
+  status.innerHTML = `<span class="status-dot"></span>${label}`;
+  status.classList.toggle('is-connected', connected);
+}
+
+async function ensureRemoteCalendar() {
+  if (calendarToken && subscriptionUrl) return { token: calendarToken, subscriptionUrl };
+  const payload = await apiRequest('/api/calendars', {
+    method: 'POST',
+    body: JSON.stringify({ name: '林予安的岁时日历' }),
+  });
+  calendarToken = payload.calendar.token;
+  localStorage.setItem('suishi-calendar-token', calendarToken);
+  updateSubscriptionUrl(payload.subscriptionUrl);
+  setConnectionStatus('已连接', true);
+  return { token: calendarToken, subscriptionUrl: payload.subscriptionUrl };
+}
+
+async function loadRemoteCalendar() {
+  if (!calendarToken) return;
+  try {
+    const payload = await apiRequest(`/api/calendars/${calendarToken}/events`);
+    state.events = payload.events.map((event) => ({ ...event, remoteId: event.id }));
+    updateSubscriptionUrl(`${API_BASE}/api/calendar/${calendarToken}.ics`);
+    setConnectionStatus('已连接', true);
+    renderCalendar();
+    renderUpcoming();
+    renderEventListPage();
+  } catch (error) {
+    setConnectionStatus('本地预览');
+    showToast(`Cloudflare 日历暂时无法连接：${error.message}`);
+  }
+}
+
+async function syncEventToRemote(event) {
+  const remote = await ensureRemoteCalendar();
+  const payload = await apiRequest(`/api/calendars/${remote.token}/events`, {
+    method: 'POST',
+    body: JSON.stringify({
+      name: event.name,
+      dateType: event.dateType,
+      date: event.date,
+      month: event.month,
+      day: event.day,
+      note: event.note,
+      tag: event.tag,
+    }),
+  });
+  event.remoteId = payload.event.id;
+  event.id = payload.event.id;
+  event.date = payload.event.date;
+  return payload.event;
 }
 
 function formatShortDate(dateString) {
@@ -154,7 +234,13 @@ function showToast(message) {
 }
 
 async function copySubscriptionUrl() {
-  const url = $('#subscription-url').textContent;
+  let url = subscriptionUrl;
+  try {
+    if (!url) url = (await ensureRemoteCalendar()).subscriptionUrl;
+  } catch (error) {
+    showToast(`暂时无法生成订阅链接：${error.message}`);
+    return;
+  }
   try {
     await navigator.clipboard.writeText(url);
     showToast('订阅链接已复制，可以粘贴到 iPhone 日历。');
@@ -173,37 +259,54 @@ $('#copy-url').addEventListener('click', copySubscriptionUrl);
 $('#show-all-events').addEventListener('click', () => setView('events'));
 $$('.segment').forEach((segment) => segment.addEventListener('click', () => setDateType(segment.dataset.dateType)));
 
-$('#event-form').addEventListener('submit', (event) => {
+$('#event-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   const form = new FormData(event.currentTarget);
   const dateType = form.get('dateType');
   const solarDate = form.get('solarDate');
-  const eventDate = dateType === 'solar' && solarDate ? solarDate : '2027-01-15';
-  state.events.push({
+  const newEvent = {
     id: Date.now(),
     name: form.get('name'),
     dateType,
     month: form.get('month'),
     day: form.get('day'),
-    date: eventDate,
+    date: dateType === 'solar' && solarDate ? solarDate : null,
     note: form.get('note'),
     tag: dateType === 'lunar' ? '农历生日' : '公历日期',
     color: 'birthday',
-  });
+  };
+  state.events.push(newEvent);
   persistEvents();
   renderCalendar();
   renderUpcoming();
   renderEventListPage();
   closeModal();
-  showToast('日期已保存。接入后端后会自动加入订阅日历。');
+  try {
+    await syncEventToRemote(newEvent);
+    persistEvents();
+    renderCalendar();
+    renderUpcoming();
+    renderEventListPage();
+    showToast('日期已保存，并已加入 Cloudflare 日历。');
+  } catch (error) {
+    showToast(`日期已保存在本地，远程同步失败：${error.message}`);
+  }
 });
 
-document.addEventListener('click', (event) => {
+document.addEventListener('click', async (event) => {
   const deleteButton = event.target.closest('[data-delete-event]');
   if (!deleteButton) return;
-  const id = Number(deleteButton.dataset.deleteEvent);
-  const target = state.events.find((item) => item.id === id);
-  state.events = state.events.filter((item) => item.id !== id);
+  const id = deleteButton.dataset.deleteEvent;
+  const target = state.events.find((item) => String(item.id) === id);
+  if (target?.remoteId && calendarToken) {
+    try {
+      await apiRequest(`/api/calendars/${calendarToken}/events/${target.remoteId}`, { method: 'DELETE' });
+    } catch (error) {
+      showToast(`远程日期删除失败：${error.message}`);
+      return;
+    }
+  }
+  state.events = state.events.filter((item) => String(item.id) !== id);
   persistEvents();
   renderCalendar();
   renderUpcoming();
@@ -218,3 +321,5 @@ document.addEventListener('keydown', (event) => {
 renderCalendar();
 renderUpcoming();
 renderEventListPage();
+updateSubscriptionUrl();
+loadRemoteCalendar();

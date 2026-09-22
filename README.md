@@ -2,11 +2,12 @@
 
 一个面向中文用户的 Apple 日历订阅前端原型，用于管理农历生日、纪念日和中国节假日。
 
-当前版本是纯静态前端，数据保存在浏览器的 `localStorage` 中，用于先验证录入和订阅引导体验。后续可以接入 Supabase Auth、数据库和日历生成接口：
+当前仓库已经包含 Cloudflare Worker API 骨架。前端仍然支持 `localStorage` 预览模式，接入 Worker 后可以创建远程日历、保存日期并提供 `.ics` 订阅地址。
 
 - `app.js` 中的 `state.events` 是前端事件模型；
-- `subscription-url` 是订阅接口的占位地址；
-- 农历日期转公历、未来年份生成和 `.ics` 输出应放在后端完成。
+- `worker/index.js` 提供日历创建、日期增删改和 `.ics` 输出接口；
+- `wrangler.jsonc` 绑定了独立的 Cloudflare KV 命名空间；
+- 农历日期转公历、未来年份生成和法定节假日同步还需要接入下一步的后端计算与数据源。
 
 ## 本地预览
 
@@ -15,6 +16,15 @@
 ```bash
 npx serve .
 ```
+
+## Cloudflare Worker
+
+```bash
+npm install
+npx wrangler deploy
+```
+
+Worker 默认名称是 `suishi-calendar-api`，日历订阅接口为 `/api/calendar/{token}.ics`。
 
 ## GitHub Pages
 
