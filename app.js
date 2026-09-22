@@ -101,7 +101,12 @@ async function loadRemoteCalendar() {
   if (!calendarToken) return;
   try {
     const payload = await apiRequest(`/api/calendars/${calendarToken}/events`);
-    state.events = payload.events.map((event) => ({ ...event, remoteId: event.id }));
+    state.events = payload.events.map((event) => ({
+      ...event,
+      month: event.month || event.lunarMonth,
+      day: event.day || event.lunarDay,
+      remoteId: event.id,
+    }));
     updateSubscriptionUrl(`${API_BASE}/api/calendar/${calendarToken}.ics`);
     setConnectionStatus('已连接', true);
     renderCalendar();
