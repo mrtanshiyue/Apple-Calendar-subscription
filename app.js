@@ -1,29 +1,29 @@
 const demoEvents = [
-  { id: 1, name: '妈妈生日', dateType: 'lunar', month: '八月', day: '初八', date: '2026-09-19', note: '记得提前订花', tag: '农历生日', color: 'birthday' },
-  { id: 2, name: '国庆节', dateType: 'holiday', month: '', day: '', date: '2026-10-01', note: '放假 7 天 · 10 月 10 日补班', tag: '法定节假日', color: 'holiday' },
-  { id: 3, name: '外婆生日', dateType: 'lunar', month: '九月', day: '廿三', date: '2026-11-03', note: '农历九月廿三', tag: '农历生日', color: 'birthday' },
+  { id: 1, name: '妈妈生日', dateType: 'lunar', month: '八月', day: '初八', date: '2026-09-19', note: '记得提前订花', tag: '农历生日', category: 'birthday', color: 'birthday' },
+  { id: 2, name: '国庆节', dateType: 'holiday', month: '', day: '', date: '2026-10-01', note: '放假 7 天 · 10 月 10 日补班', tag: '法定节假日', category: 'china-holiday', color: 'holiday' },
+  { id: 3, name: '外婆生日', dateType: 'lunar', month: '九月', day: '廿三', date: '2026-11-03', note: '农历九月廿三', tag: '农历生日', category: 'birthday', color: 'birthday' },
 ];
 
 const defaultUsEvents = [
-  { id: 'us-new-years-day', name: '美国元旦', date: '2026-01-01', note: '美国主要节日', tag: '美国节日', color: 'holiday' },
-  { id: 'us-mlk-day', name: '马丁·路德·金纪念日', date: '2026-01-19', note: '一月第三个星期一', tag: '美国节日', color: 'holiday' },
-  { id: 'us-valentines-day', name: '情人节', date: '2026-02-14', note: '礼品购物节点', tag: '美国节日', color: 'holiday' },
-  { id: 'us-presidents-day', name: '总统日（华盛顿诞辰）', date: '2026-02-16', note: '二月第三个星期一', tag: '美国节日', color: 'holiday' },
-  { id: 'us-easter', name: '复活节', date: '2026-04-05', note: '春季主要节日', tag: '美国节日', color: 'holiday' },
-  { id: 'us-memorial-day', name: '阵亡将士纪念日', date: '2026-05-25', note: '五月最后一个星期一', tag: '美国节日', color: 'holiday' },
-  { id: 'us-mothers-day', name: '母亲节', date: '2026-05-10', note: '五月第二个星期日 · 长辈礼赠节点', tag: '礼赠节日', color: 'holiday' },
-  { id: 'us-fathers-day', name: '父亲节', date: '2026-06-21', note: '六月第三个星期日 · 长辈礼赠节点', tag: '礼赠节日', color: 'holiday' },
-  { id: 'us-juneteenth', name: '六月节', date: '2026-06-19', note: '美国联邦节日', tag: '美国节日', color: 'holiday' },
-  { id: 'us-independence-day', name: '美国独立日', date: '2026-07-04', note: '美国联邦节日', tag: '美国节日', color: 'holiday' },
-  { id: 'us-labor-day', name: '劳动节', date: '2026-09-07', note: '九月第一个星期一', tag: '美国节日', color: 'holiday' },
-  { id: 'us-grandparents-day', name: '祖父母节', date: '2026-09-13', note: '劳动节后的第一个星期日 · 长辈礼赠节点', tag: '礼赠节日', color: 'holiday' },
-  { id: 'us-columbus-day', name: '哥伦布日 / 原住民日', date: '2026-10-12', note: '十月第二个星期一', tag: '美国节日', color: 'holiday' },
-  { id: 'us-halloween', name: '万圣节', date: '2026-10-31', note: '美国主要节日', tag: '美国节日', color: 'holiday' },
-  { id: 'us-veterans-day', name: '退伍军人节', date: '2026-11-11', note: '美国联邦节日', tag: '美国节日', color: 'holiday' },
-  { id: 'us-thanksgiving', name: '感恩节', date: '2026-11-26', note: '十一月第四个星期四 · BFCM 购物季开始', tag: '购物节点', color: 'holiday' },
-  { id: 'us-black-friday', name: '黑色星期五', date: '2026-11-27', note: '感恩节次日 · 年度重点购物日', tag: '购物节点', color: 'holiday' },
-  { id: 'us-cyber-monday', name: '网络星期一', date: '2026-11-30', note: '感恩节后的星期一 · 线上购物节点', tag: '购物节点', color: 'holiday' },
-  { id: 'us-christmas', name: '圣诞节', date: '2026-12-25', note: '冬季主要节日 · 长辈礼赠节点', tag: '礼赠节日', color: 'holiday' },
+  { id: 'us-new-years-day', name: '美国元旦', date: '2026-01-01', note: '美国主要节日', tag: '美国节日', category: 'us-holiday', color: 'holiday' },
+  { id: 'us-mlk-day', name: '马丁·路德·金纪念日', date: '2026-01-19', note: '一月第三个星期一', tag: '美国节日', category: 'us-holiday', color: 'holiday' },
+  { id: 'us-valentines-day', name: '情人节', date: '2026-02-14', note: '礼品购物节点', tag: '美国节日', category: 'us-holiday', color: 'holiday' },
+  { id: 'us-presidents-day', name: '总统日（华盛顿诞辰）', date: '2026-02-16', note: '二月第三个星期一', tag: '美国节日', category: 'us-holiday', color: 'holiday' },
+  { id: 'us-easter', name: '复活节', date: '2026-04-05', note: '春季主要节日', tag: '美国节日', category: 'us-holiday', color: 'holiday' },
+  { id: 'us-memorial-day', name: '阵亡将士纪念日', date: '2026-05-25', note: '五月最后一个星期一', tag: '美国节日', category: 'us-holiday', color: 'holiday' },
+  { id: 'us-mothers-day', name: '母亲节', date: '2026-05-10', note: '五月第二个星期日 · 长辈礼赠节点', tag: '礼赠节日', category: 'us-holiday', color: 'holiday' },
+  { id: 'us-fathers-day', name: '父亲节', date: '2026-06-21', note: '六月第三个星期日 · 长辈礼赠节点', tag: '礼赠节日', category: 'us-holiday', color: 'holiday' },
+  { id: 'us-juneteenth', name: '六月节', date: '2026-06-19', note: '美国联邦节日', tag: '美国节日', category: 'us-holiday', color: 'holiday' },
+  { id: 'us-independence-day', name: '美国独立日', date: '2026-07-04', note: '美国联邦节日', tag: '美国节日', category: 'us-holiday', color: 'holiday' },
+  { id: 'us-labor-day', name: '劳动节', date: '2026-09-07', note: '九月第一个星期一', tag: '美国节日', category: 'us-holiday', color: 'holiday' },
+  { id: 'us-grandparents-day', name: '祖父母节', date: '2026-09-13', note: '劳动节后的第一个星期日 · 长辈礼赠节点', tag: '礼赠节日', category: 'us-holiday', color: 'holiday' },
+  { id: 'us-columbus-day', name: '哥伦布日 / 原住民日', date: '2026-10-12', note: '十月第二个星期一', tag: '美国节日', category: 'us-holiday', color: 'holiday' },
+  { id: 'us-halloween', name: '万圣节', date: '2026-10-31', note: '美国主要节日', tag: '美国节日', category: 'us-holiday', color: 'holiday' },
+  { id: 'us-veterans-day', name: '退伍军人节', date: '2026-11-11', note: '美国联邦节日', tag: '美国节日', category: 'us-holiday', color: 'holiday' },
+  { id: 'us-thanksgiving', name: '感恩节', date: '2026-11-26', note: '十一月第四个星期四 · BFCM 购物季开始', tag: '购物节点', category: 'us-holiday', color: 'holiday' },
+  { id: 'us-black-friday', name: '黑色星期五', date: '2026-11-27', note: '感恩节次日 · 年度重点购物日', tag: '购物节点', category: 'us-holiday', color: 'holiday' },
+  { id: 'us-cyber-monday', name: '网络星期一', date: '2026-11-30', note: '感恩节后的星期一 · 线上购物节点', tag: '购物节点', category: 'us-holiday', color: 'holiday' },
+  { id: 'us-christmas', name: '圣诞节', date: '2026-12-25', note: '冬季主要节日 · 长辈礼赠节点', tag: '礼赠节日', category: 'us-holiday', color: 'holiday' },
 ];
 
 const seedEvents = [...demoEvents, ...defaultUsEvents];
@@ -55,6 +55,22 @@ function loadEvents() {
 
 function persistEvents() {
   localStorage.setItem('suishi-events', JSON.stringify(state.events));
+}
+
+const CATEGORY_META = {
+  birthday: { label: '生日', order: 1 },
+  'china-holiday': { label: '中国节日', order: 2 },
+  'us-holiday': { label: '美国节日', order: 3 },
+  other: { label: '其他日期', order: 4 },
+};
+
+function eventCategory(event) {
+  if (CATEGORY_META[event.category]) return event.category;
+  const text = `${event.id || ''} ${event.name || ''} ${event.tag || ''} ${event.note || ''}`;
+  if (event.dateType === 'lunar' || /生日/.test(text)) return 'birthday';
+  if (/^us-/.test(String(event.id || '')) || /美国|购物节点|礼赠节日/.test(text)) return 'us-holiday';
+  if (event.dateType === 'holiday' || /中国|法定节假日|调休|补班/.test(text)) return 'china-holiday';
+  return 'other';
 }
 
 async function apiRequest(path, options = {}) {
@@ -105,6 +121,7 @@ async function loadRemoteCalendar() {
       ...event,
       month: event.month || event.lunarMonth,
       day: event.day || event.lunarDay,
+      category: event.category || eventCategory(event),
       remoteId: event.id,
     }));
     updateSubscriptionUrl(`${API_BASE}/api/calendar/${calendarToken}.ics`);
@@ -130,6 +147,7 @@ async function syncEventToRemote(event) {
       day: event.day,
       note: event.note,
       tag: event.tag,
+      category: event.category || eventCategory(event),
       color: event.color,
       repeatAnnual: event.repeatAnnual,
       annualRule: event.annualRule,
@@ -218,13 +236,27 @@ function renderUpcoming() {
 function renderEventListPage() {
   const list = $('#event-list-page');
   if (!list) return;
-  const events = [...state.events].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-  list.innerHTML = events.map((event) => `
-    <article class="event-list-row">
-      <div class="event-list-date">${event.date ? `${event.date.replaceAll('-', ' / ')} · ${formatWeekday(event.date)}` : '尚未计算'}</div>
-      <div><strong>${event.name}</strong><small>${event.note || (event.dateType === 'lunar' ? `农历${event.month}${event.day}` : '公历日期')}</small></div>
-      <button class="delete-event" type="button" data-delete-event="${event.id}" aria-label="删除 ${event.name}">删除</button>
-    </article>`).join('');
+  const groups = new Map();
+  state.events.forEach((event) => {
+    const category = eventCategory(event);
+    if (!groups.has(category)) groups.set(category, []);
+    groups.get(category).push(event);
+  });
+  list.innerHTML = [...groups.entries()]
+    .sort(([a], [b]) => CATEGORY_META[a].order - CATEGORY_META[b].order)
+    .map(([category, events]) => `
+      <section class="event-group" aria-labelledby="event-group-${category}">
+        <div class="event-group-heading">
+          <p class="eyebrow" id="event-group-${category}">${CATEGORY_META[category].label}</p>
+          <span>${events.length} 个日期</span>
+        </div>
+        ${events.sort((a, b) => (a.date || '').localeCompare(b.date || '')).map((event) => `
+          <article class="event-list-row">
+            <div class="event-list-date">${event.date ? `${event.date.replaceAll('-', ' / ')} · ${formatWeekday(event.date)}` : '尚未计算'}</div>
+            <div><strong>${event.name}</strong><small>${event.note || (event.dateType === 'lunar' ? `农历${event.month || event.lunarMonth || ''}${event.day || event.lunarDay || ''}` : '公历日期')}</small></div>
+            <button class="delete-event" type="button" data-delete-event="${event.id}" aria-label="删除 ${event.name}">删除</button>
+          </article>`).join('')}
+      </section>`).join('');
 }
 
 function setView(viewName) {
@@ -308,6 +340,7 @@ $('#event-form').addEventListener('submit', async (event) => {
     date: dateType === 'solar' && solarDate ? solarDate : null,
     note: form.get('note'),
     tag: dateType === 'lunar' ? '农历生日' : '公历日期',
+    category: dateType === 'lunar' ? 'birthday' : 'other',
     color: 'birthday',
   };
   state.events.push(newEvent);

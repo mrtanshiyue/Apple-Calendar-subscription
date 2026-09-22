@@ -7,7 +7,7 @@ const JSON_HEADERS = {
 };
 
 const CALENDAR_PREFIX = 'calendar:';
-const CALENDAR_VERSION = 2;
+const CALENDAR_VERSION = 3;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const LUNAR_MONTHS = ['正月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '冬月', '腊月'];
 const LUNAR_DAYS = {
@@ -19,25 +19,25 @@ const LUNAR_DAYS = {
 // These are stable annual dates and relative holidays. Prime Day events are
 // intentionally omitted because Amazon announces their dates each year.
 const DEFAULT_US_EVENT_DEFINITIONS = [
-  { id: 'us-new-years-day', name: '美国元旦', rule: { type: 'fixed', month: 1, day: 1 }, note: '美国主要节日', tag: '美国节日' },
-  { id: 'us-mlk-day', name: '马丁·路德·金纪念日', rule: { type: 'nth-weekday', month: 1, weekday: 1, nth: 3 }, note: '一月第三个星期一', tag: '美国节日' },
-  { id: 'us-valentines-day', name: '情人节', rule: { type: 'fixed', month: 2, day: 14 }, note: '礼品购物节点', tag: '美国节日' },
-  { id: 'us-presidents-day', name: '总统日（华盛顿诞辰）', rule: { type: 'nth-weekday', month: 2, weekday: 1, nth: 3 }, note: '二月第三个星期一', tag: '美国节日' },
-  { id: 'us-easter', name: '复活节', rule: { type: 'easter', offset: 0 }, note: '春季主要节日', tag: '美国节日' },
-  { id: 'us-memorial-day', name: '阵亡将士纪念日', rule: { type: 'last-weekday', month: 5, weekday: 1 }, note: '五月最后一个星期一', tag: '美国节日' },
-  { id: 'us-mothers-day', name: '母亲节', rule: { type: 'nth-weekday', month: 5, weekday: 0, nth: 2 }, note: '五月第二个星期日 · 长辈礼赠节点', tag: '礼赠节日' },
-  { id: 'us-fathers-day', name: '父亲节', rule: { type: 'nth-weekday', month: 6, weekday: 0, nth: 3 }, note: '六月第三个星期日 · 长辈礼赠节点', tag: '礼赠节日' },
-  { id: 'us-juneteenth', name: '六月节', rule: { type: 'fixed', month: 6, day: 19 }, note: '美国联邦节日', tag: '美国节日' },
-  { id: 'us-independence-day', name: '美国独立日', rule: { type: 'fixed', month: 7, day: 4 }, note: '美国联邦节日', tag: '美国节日' },
-  { id: 'us-labor-day', name: '劳动节', rule: { type: 'nth-weekday', month: 9, weekday: 1, nth: 1 }, note: '九月第一个星期一', tag: '美国节日' },
-  { id: 'us-grandparents-day', name: '祖父母节', rule: { type: 'grandparents-day' }, note: '劳动节后的第一个星期日 · 长辈礼赠节点', tag: '礼赠节日' },
-  { id: 'us-columbus-day', name: '哥伦布日 / 原住民日', rule: { type: 'nth-weekday', month: 10, weekday: 1, nth: 2 }, note: '十月第二个星期一', tag: '美国节日' },
-  { id: 'us-halloween', name: '万圣节', rule: { type: 'fixed', month: 10, day: 31 }, note: '美国主要节日', tag: '美国节日' },
-  { id: 'us-veterans-day', name: '退伍军人节', rule: { type: 'fixed', month: 11, day: 11 }, note: '美国联邦节日', tag: '美国节日' },
-  { id: 'us-thanksgiving', name: '感恩节', rule: { type: 'nth-weekday', month: 11, weekday: 4, nth: 4 }, note: '十一月第四个星期四 · BFCM 购物季开始', tag: '购物节点' },
-  { id: 'us-black-friday', name: '黑色星期五', rule: { type: 'after-thanksgiving', offset: 1 }, note: '感恩节次日 · 年度重点购物日', tag: '购物节点' },
-  { id: 'us-cyber-monday', name: '网络星期一', rule: { type: 'after-thanksgiving', offset: 4 }, note: '感恩节后的星期一 · 线上购物节点', tag: '购物节点' },
-  { id: 'us-christmas', name: '圣诞节', rule: { type: 'fixed', month: 12, day: 25 }, note: '冬季主要节日 · 长辈礼赠节点', tag: '礼赠节日' },
+  { id: 'us-new-years-day', name: '美国元旦', rule: { type: 'fixed', month: 1, day: 1 }, note: '美国主要节日', tag: '美国节日', category: 'us-holiday' },
+  { id: 'us-mlk-day', name: '马丁·路德·金纪念日', rule: { type: 'nth-weekday', month: 1, weekday: 1, nth: 3 }, note: '一月第三个星期一', tag: '美国节日', category: 'us-holiday' },
+  { id: 'us-valentines-day', name: '情人节', rule: { type: 'fixed', month: 2, day: 14 }, note: '礼品购物节点', tag: '美国节日', category: 'us-holiday' },
+  { id: 'us-presidents-day', name: '总统日（华盛顿诞辰）', rule: { type: 'nth-weekday', month: 2, weekday: 1, nth: 3 }, note: '二月第三个星期一', tag: '美国节日', category: 'us-holiday' },
+  { id: 'us-easter', name: '复活节', rule: { type: 'easter', offset: 0 }, note: '春季主要节日', tag: '美国节日', category: 'us-holiday' },
+  { id: 'us-memorial-day', name: '阵亡将士纪念日', rule: { type: 'last-weekday', month: 5, weekday: 1 }, note: '五月最后一个星期一', tag: '美国节日', category: 'us-holiday' },
+  { id: 'us-mothers-day', name: '母亲节', rule: { type: 'nth-weekday', month: 5, weekday: 0, nth: 2 }, note: '五月第二个星期日 · 长辈礼赠节点', tag: '礼赠节日', category: 'us-holiday' },
+  { id: 'us-fathers-day', name: '父亲节', rule: { type: 'nth-weekday', month: 6, weekday: 0, nth: 3 }, note: '六月第三个星期日 · 长辈礼赠节点', tag: '礼赠节日', category: 'us-holiday' },
+  { id: 'us-juneteenth', name: '六月节', rule: { type: 'fixed', month: 6, day: 19 }, note: '美国联邦节日', tag: '美国节日', category: 'us-holiday' },
+  { id: 'us-independence-day', name: '美国独立日', rule: { type: 'fixed', month: 7, day: 4 }, note: '美国联邦节日', tag: '美国节日', category: 'us-holiday' },
+  { id: 'us-labor-day', name: '劳动节', rule: { type: 'nth-weekday', month: 9, weekday: 1, nth: 1 }, note: '九月第一个星期一', tag: '美国节日', category: 'us-holiday' },
+  { id: 'us-grandparents-day', name: '祖父母节', rule: { type: 'grandparents-day' }, note: '劳动节后的第一个星期日 · 长辈礼赠节点', tag: '礼赠节日', category: 'us-holiday' },
+  { id: 'us-columbus-day', name: '哥伦布日 / 原住民日', rule: { type: 'nth-weekday', month: 10, weekday: 1, nth: 2 }, note: '十月第二个星期一', tag: '美国节日', category: 'us-holiday' },
+  { id: 'us-halloween', name: '万圣节', rule: { type: 'fixed', month: 10, day: 31 }, note: '美国主要节日', tag: '美国节日', category: 'us-holiday' },
+  { id: 'us-veterans-day', name: '退伍军人节', rule: { type: 'fixed', month: 11, day: 11 }, note: '美国联邦节日', tag: '美国节日', category: 'us-holiday' },
+  { id: 'us-thanksgiving', name: '感恩节', rule: { type: 'nth-weekday', month: 11, weekday: 4, nth: 4 }, note: '十一月第四个星期四 · BFCM 购物季开始', tag: '购物节点', category: 'us-holiday' },
+  { id: 'us-black-friday', name: '黑色星期五', rule: { type: 'after-thanksgiving', offset: 1 }, note: '感恩节次日 · 年度重点购物日', tag: '购物节点', category: 'us-holiday' },
+  { id: 'us-cyber-monday', name: '网络星期一', rule: { type: 'after-thanksgiving', offset: 4 }, note: '感恩节后的星期一 · 线上购物节点', tag: '购物节点', category: 'us-holiday' },
+  { id: 'us-christmas', name: '圣诞节', rule: { type: 'fixed', month: 12, day: 25 }, note: '冬季主要节日 · 长辈礼赠节点', tag: '礼赠节日', category: 'us-holiday' },
 ];
 
 export default {
@@ -184,6 +184,7 @@ function makeIcs(calendar) {
         `DTSTART;VALUE=DATE:${start}`,
         `DTEND;VALUE=DATE:${end}`,
         `SUMMARY:${escapeIcs(event.name)}`,
+        `CATEGORIES:${escapeIcs(categoryLabel(event.category))}`,
         event.repeatAnnual && !event.annualRule && event.dateType === 'solar' ? 'RRULE:FREQ=YEARLY' : '',
         description ? `DESCRIPTION:${escapeIcs(description)}` : '',
         'END:VEVENT',
@@ -207,8 +208,10 @@ function normalizeEvent(input) {
   const date = dateType === 'lunar' ? lunarToSolar(new Date().getUTCFullYear(), lunarMonth, lunarDay, lunarLeap) : suppliedDate;
   if (dateType !== 'lunar' && !date) throw new Error('公历日期格式不正确。');
 
+  const id = cleanText(input.id, 80) || createToken(10);
+  const tag = cleanText(input.tag, 40) || (dateType === 'lunar' ? '农历生日' : dateType === 'holiday' ? '法定节假日' : '公历日期');
   return {
-    id: cleanText(input.id, 80) || createToken(10),
+    id,
     name,
     dateType,
     date,
@@ -218,7 +221,8 @@ function normalizeEvent(input) {
     annualRule: normalizeAnnualRule(input.annualRule),
     repeatAnnual: input.repeatAnnual === undefined ? dateType === 'solar' : Boolean(input.repeatAnnual),
     note: cleanText(input.note, 240),
-    tag: cleanText(input.tag, 40) || (dateType === 'lunar' ? '农历生日' : dateType === 'holiday' ? '法定节假日' : '公历日期'),
+    tag,
+    category: normalizeCategory(input.category) || inferEventCategory({ id, name, dateType, tag }),
     color: cleanText(input.color, 20) || (dateType === 'holiday' ? 'holiday' : 'birthday'),
     updatedAt: new Date().toISOString(),
   };
@@ -252,10 +256,33 @@ function buildDefaultEvents(year) {
       repeatAnnual: false,
       note: definition.note,
       tag: definition.tag,
+      category: definition.category,
       color: 'holiday',
     }),
     system: true,
   }));
+}
+
+function normalizeCategory(value) {
+  return ['birthday', 'china-holiday', 'us-holiday', 'other'].includes(value) ? value : null;
+}
+
+function inferEventCategory(event) {
+  if (event.category && normalizeCategory(event.category)) return event.category;
+  const text = `${event.id || ''} ${event.name || ''} ${event.tag || ''} ${event.note || ''}`;
+  if (event.dateType === 'lunar' || /生日/.test(text)) return 'birthday';
+  if (/^us-/.test(String(event.id || '')) || /美国|购物节点|礼赠节日/.test(text)) return 'us-holiday';
+  if (event.dateType === 'holiday' || /中国|法定节假日|调休|补班/.test(text)) return 'china-holiday';
+  return 'other';
+}
+
+function categoryLabel(category) {
+  return ({
+    birthday: '生日',
+    'china-holiday': '中国节日',
+    'us-holiday': '美国节日',
+    other: '其他日期',
+  })[normalizeCategory(category) || 'other'];
 }
 
 function normalizeAnnualRule(input) {
@@ -353,7 +380,7 @@ async function getCalendar(env, token) {
     const migrated = {
       ...value,
       version: CALENDAR_VERSION,
-      events: [...value.events, ...migratedEvents],
+      events: [...value.events.map((event) => ({ ...event, category: normalizeCategory(event.category) || inferEventCategory(event) })), ...migratedEvents],
       updatedAt: new Date().toISOString(),
     };
     await saveCalendar(env, migrated);
