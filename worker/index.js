@@ -7,7 +7,10 @@ const JSON_HEADERS = {
 };
 
 const CALENDAR_PREFIX = 'calendar:';
-const CALENDAR_VERSION = 4;
+const CALENDAR_VERSION = 5;
+const CHINA_SOURCE_CACHE_KEY = 'source:china-holidays';
+const CHINA_SOURCE_URL = 'https://cdn.jsdelivr.net/npm/chinese-days/dist/holidays.ics';
+const CHINA_SOURCE_CACHE_MS = 12 * 60 * 60 * 1000;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const LUNAR_MONTHS = ['正月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '冬月', '腊月'];
 const LUNAR_DAYS = {
@@ -98,6 +101,7 @@ async function createCalendar(request, env) {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
+  await refreshChinaHolidayEvents(env, calendar);
   await saveCalendar(env, calendar);
   return json({
     calendar: publicCalendar(calendar),
@@ -376,23 +380,149 @@ function lunarMonthNumber(value) {
   return LUNAR_MONTHS.indexOf(aliases[normalized] || normalized) + 1;
 }
 
+async function refreshChinaHolidayEvents(env, calendar) {
+  const sourceEvents = await getChinaHolidayEvents(env);
+  if (!sourceEvents.length) return false;
+
+  const existingSourceEvents = calendar.events.filter((event) => event.source === 'china-holidays');
+  const retainedEvents = calendar.events.filter((event) => event.source !== 'china-holidays');
+  const nextEvents = [...retainedEvents, ...sourceEvents];
+  const changed = !sameEventSet(existingSourceEvents, sourceEvents);
+  if (changed) calendar.events = nextEvents;
+  return changed;
+}
+
+async function getChinaHolidayEvents(env) {
+  const cached = await env.CALENDARS.get(CHINA_SOURCE_CACHE_KEY, 'json');
+  const now = Date.now();
+  if (cached && Array.isArray(cached.events) && now - Number(cached.fetchedAt || 0) < CHINA_SOURCE_CACHE_MS) {
+    return cached.events;
+  }
+
+  try {
+    const response = await fetch(CHINA_SOURCE_URL, {
+      headers: { accept: 'text/calendar, text/plain;q=0.9, */*;q=0.1' },
+    });
+    if (!response.ok) throw new Error(`China holiday source returned ${response.status}`);
+    const text = await response.text();
+    const events = parseChinaHolidayIcs(text);
+    if (!events.length) throw new Error('China holiday source returned no events');
+    await env.CALENDARS.put(CHINA_SOURCE_CACHE_KEY, JSON.stringify({
+      sourceUrl: CHINA_SOURCE_URL,
+      fetchedAt: now,
+      events,
+    }));
+    return events;
+  } catch (error) {
+    console.error(JSON.stringify({ source: CHINA_SOURCE_URL, message: error instanceof Error ? error.message : String(error) }));
+    return cached && Array.isArray(cached.events) ? cached.events : [];
+  }
+}
+
+function parseChinaHolidayIcs(text) {
+  const lines = unfoldIcs(text);
+  const parsed = [];
+  let current = null;
+
+  for (const line of lines) {
+    if (line === 'BEGIN:VEVENT') {
+      current = {};
+      continue;
+    }
+    if (line === 'END:VEVENT') {
+      if (current) parsed.push(current);
+      current = null;
+      continue;
+    }
+    if (!current) continue;
+    const separator = line.indexOf(':');
+    if (separator < 0) continue;
+    const rawKey = line.slice(0, separator);
+    const key = rawKey.split(';', 1)[0].toUpperCase();
+    const value = unescapeIcs(line.slice(separator + 1));
+    if (key === 'UID') current.uid = value;
+    if (key === 'SUMMARY') current.summary = value;
+    if (key === 'DESCRIPTION') current.description = value;
+    if (key === 'DTSTART') current.start = parseIcsDate(value);
+    if (key === 'DTEND') current.end = parseIcsDate(value);
+  }
+
+  return parsed.flatMap((event, index) => {
+    if (!event.start || !event.summary) return [];
+    const isWorkday = /补班|调休|工作日|上班/.test(`${event.summary} ${event.description || ''}`);
+    const end = event.end && event.end > event.start ? event.end : addDays(event.start, 1);
+    const dates = [];
+    for (let date = event.start; date < end; date = addDays(date, 1)) dates.push(date);
+    return dates.map((date, dateIndex) => ({
+      id: `china-holiday-${stableEventId(event.uid || `${event.summary}-${index}`)}-${date}`,
+      name: isWorkday ? `调休上班：${event.summary}` : event.summary,
+      dateType: 'holiday',
+      date,
+      lunarMonth: '',
+      lunarDay: '',
+      lunarLeap: false,
+      annualRule: null,
+      repeatAnnual: false,
+      note: event.description || (isWorkday ? '中国法定节假日调休安排' : '中国法定节假日安排'),
+      tag: isWorkday ? '调休上班' : '法定节假日',
+      category: 'china-holiday',
+      color: isWorkday ? 'workday' : 'holiday',
+      source: 'china-holidays',
+      sourceUid: event.uid || `${event.summary}-${index}`,
+      sourceDay: dateIndex,
+      system: true,
+    }));
+  });
+}
+
+function unfoldIcs(text) {
+  return String(text || '').replace(/\r?\n[ \t]/g, '').split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+}
+
+function parseIcsDate(value) {
+  const match = String(value || '').match(/^(\d{4})(\d{2})(\d{2})/);
+  return match ? `${match[1]}-${match[2]}-${match[3]}` : null;
+}
+
+function unescapeIcs(value) {
+  return String(value || '').replace(/\\n/gi, '\n').replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\\\/g, '\\');
+}
+
+function stableEventId(value) {
+  return String(value || 'event').replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 100) || 'event';
+}
+
+function sameEventSet(left, right) {
+  if (left.length !== right.length) return false;
+  const signature = (event) => [event.id, event.name, event.date, event.note, event.tag].join('|');
+  const leftSignatures = left.map(signature).sort();
+  const rightSignatures = right.map(signature).sort();
+  return leftSignatures.every((value, index) => value === rightSignatures[index]);
+}
+
 async function getCalendar(env, token) {
   if (!isValidToken(token)) return null;
   const value = await env.CALENDARS.get(`${CALENDAR_PREFIX}${token}`, 'json');
   if (!value || !Array.isArray(value.events)) return null;
-  if ((value.version || 1) < CALENDAR_VERSION) {
-    const existingIds = new Set(value.events.map((event) => event.id));
+  let calendar = value;
+  let changed = false;
+  if ((calendar.version || 1) < CALENDAR_VERSION) {
+    const existingIds = new Set(calendar.events.map((event) => event.id));
     const migratedEvents = buildDefaultEvents(new Date().getUTCFullYear()).filter((event) => !existingIds.has(event.id));
-    const migrated = {
-      ...value,
+    calendar = {
+      ...calendar,
       version: CALENDAR_VERSION,
-      events: [...value.events.map((event) => migrateStoredEvent(event)), ...migratedEvents],
+      events: [...calendar.events.map((event) => migrateStoredEvent(event)), ...migratedEvents],
       updatedAt: new Date().toISOString(),
     };
-    await saveCalendar(env, migrated);
-    return migrated;
+    changed = true;
   }
-  return value;
+  if (await refreshChinaHolidayEvents(env, calendar)) changed = true;
+  if (changed) {
+    calendar.updatedAt = new Date().toISOString();
+    await saveCalendar(env, calendar);
+  }
+  return calendar;
 }
 
 function migrateStoredEvent(event) {
