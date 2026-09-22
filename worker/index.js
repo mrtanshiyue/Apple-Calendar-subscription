@@ -447,6 +447,8 @@ function parseChinaHolidayIcs(text) {
     if (key === 'DTEND') current.end = parseIcsDate(value);
   }
 
+  const currentYear = new Date().getUTCFullYear();
+  const minimumDate = `${currentYear}-01-01`;
   return parsed.flatMap((event, index) => {
     if (!event.start || !event.summary) return [];
     const isWorkday = /补班|调休|工作日|上班|[（(]班[）)]|班$/.test(`${event.summary} ${event.description || ''}`);
@@ -472,7 +474,7 @@ function parseChinaHolidayIcs(text) {
       sourceDay: dateIndex,
       system: true,
     }));
-  });
+  }).filter((event) => event.date >= minimumDate);
 }
 
 function unfoldIcs(text) {
