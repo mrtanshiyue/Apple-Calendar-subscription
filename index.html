@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#18241f" />
+    <meta
+      name="description"
+      content="把农历生日、纪念日和法定节假日，安静地放进你的 Apple 日历。"
+    />
+    <title>岁时 · Apple Calendar Subscription</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="主导航">
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true">岁</div>
+          <div>
+            <p class="brand-name">岁时</p>
+            <p class="brand-caption">seasonal calendar</p>
+          </div>
+        </div>
+
+        <nav class="main-nav">
+          <button class="nav-item is-active" data-view="overview" type="button">
+            <span class="nav-glyph" aria-hidden="true">◫</span>
+            <span>我的日历</span>
+          </button>
+          <button class="nav-item" data-view="events" type="button">
+            <span class="nav-glyph" aria-hidden="true">＋</span>
+            <span>添加日期</span>
+          </button>
+          <button class="nav-item" data-view="settings" type="button">
+            <span class="nav-glyph" aria-hidden="true">◌</span>
+            <span>订阅设置</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-note">
+          <span class="eyebrow">今日节气</span>
+          <strong>秋分</strong>
+          <span>昼夜平分，宜收心。</span>
+        </div>
+
+        <div class="account-chip">
+          <div class="avatar">林</div>
+          <div class="account-copy">
+            <strong>林予安</strong>
+            <span>个人空间</span>
+          </div>
+          <button class="icon-button" type="button" aria-label="打开账户菜单">···</button>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div class="breadcrumb">
+            <span>我的空间</span>
+            <span class="breadcrumb-slash">/</span>
+            <strong id="page-title">日历总览</strong>
+          </div>
+          <div class="topbar-actions">
+            <span class="sync-status"><span class="status-dot"></span>前端预览</span>
+            <button class="primary-button compact" id="open-add-event" type="button">
+              <span aria-hidden="true">＋</span> 添加日期
+            </button>
+          </div>
+        </header>
+
+        <section class="view is-visible" data-view-panel="overview">
+          <div class="hero-row">
+            <div>
+              <p class="eyebrow">2026 年 · 丙午马年</p>
+              <h1>把重要的日子，<br /><em>留给时间自己提醒。</em></h1>
+              <p class="hero-copy">
+                农历生日、纪念日和中国节假日，<br class="desktop-break" />
+                用一条订阅链接安静地回到你的 Apple 日历。
+              </p>
+            </div>
+            <div class="hero-day" aria-label="今天是 9 月 22 日">
+              <span class="hero-day-label">今天</span>
+              <strong>22</strong>
+              <span>九月 · 星期二</span>
+              <span class="hero-lunar">农历八月初十</span>
+            </div>
+          </div>
+
+          <div class="content-grid">
+            <section class="calendar-panel" aria-labelledby="calendar-heading">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">月历</p>
+                  <h2 id="calendar-heading">九月 <span>2026</span></h2>
+                </div>
+                <div class="month-controls" aria-label="切换月份">
+                  <button class="icon-button" type="button" aria-label="上个月">←</button>
+                  <button class="icon-button" type="button" aria-label="下个月">→</button>
+                </div>
+              </div>
+              <div class="calendar-weekdays" aria-hidden="true">
+                <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+              </div>
+              <div class="calendar-grid" id="calendar-grid" aria-label="2026 年 9 月日历"></div>
+              <div class="calendar-legend">
+                <span><i class="legend-dot birthday"></i>生日</span>
+                <span><i class="legend-dot holiday"></i>节假日</span>
+                <span><i class="legend-dot workday"></i>调休上班</span>
+              </div>
+            </section>
+
+            <aside class="inspector-panel" aria-labelledby="upcoming-heading">
+              <div class="panel-heading inspector-heading">
+                <div>
+                  <p class="eyebrow">接下来</p>
+                  <h2 id="upcoming-heading">值得记住</h2>
+                </div>
+                <span class="event-count" id="event-count">3 件</span>
+              </div>
+              <div class="upcoming-list" id="upcoming-list"></div>
+              <button class="text-button" id="show-all-events" type="button">查看全部日期 <span aria-hidden="true">↗</span></button>
+            </aside>
+          </div>
+
+          <section class="subscription-strip">
+            <div class="subscription-copy">
+              <span class="subscription-icon" aria-hidden="true">⌁</span>
+              <div>
+                <p class="eyebrow">Apple Calendar subscription</p>
+                <h2>你的日历会自己更新。</h2>
+                <p>复制订阅地址，放进 iPhone。之后每次修改都会自动同步。</p>
+              </div>
+            </div>
+            <div class="subscription-action">
+              <code id="subscription-url">https://suishi.app/c/lin-7f2a.ics</code>
+              <button class="secondary-button" id="copy-url" type="button">复制链接</button>
+            </div>
+          </section>
+        </section>
+
+        <section class="view" data-view-panel="events" hidden>
+          <div class="section-intro">
+            <p class="eyebrow">日期簿</p>
+            <h1>添加一个要记住的日子。</h1>
+            <p>先在这里录入，后端接入后会自动换算并更新到你的订阅日历。</p>
+          </div>
+          <div class="event-list-page" id="event-list-page"></div>
+          <button class="primary-button" id="open-add-event-secondary" type="button">＋ 添加日期</button>
+        </section>
+
+        <section class="view" data-view-panel="settings" hidden>
+          <div class="section-intro">
+            <p class="eyebrow">订阅设置</p>
+            <h1>让日历按照你的习惯工作。</h1>
+            <p>这里的设置会影响日历订阅里显示的内容与提醒。</p>
+          </div>
+          <div class="settings-layout">
+            <div class="settings-group">
+              <p class="eyebrow">包含内容</p>
+              <label class="setting-row"><span><strong>中国法定节假日</strong><small>含放假、调休和补班</small></span><input type="checkbox" checked /></label>
+              <label class="setting-row"><span><strong>二十四节气</strong><small>每个节气当天显示</small></span><input type="checkbox" checked /></label>
+              <label class="setting-row"><span><strong>农历日期</strong><small>显示在每个日期下方</small></span><input type="checkbox" checked /></label>
+            </div>
+            <div class="settings-group">
+              <p class="eyebrow">提醒</p>
+              <label class="setting-row"><span><strong>生日提醒</strong><small>提前 1 天，上午 9:00</small></span><input type="checkbox" checked /></label>
+              <label class="setting-row"><span><strong>节假日提醒</strong><small>当天上午 9:00</small></span><input type="checkbox" /></label>
+              <button class="danger-button" type="button">重置订阅链接</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" id="event-modal" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <button class="modal-close icon-button" id="close-modal" type="button" aria-label="关闭">×</button>
+        <p class="eyebrow">新日期</p>
+        <h2 id="modal-title">把它加入岁时。</h2>
+        <p class="modal-intro">保存后，它会出现在你的订阅日历里。</p>
+        <form id="event-form">
+          <label class="field-label" for="event-name">名称</label>
+          <input class="text-input" id="event-name" name="name" placeholder="例如：妈妈生日" required />
+
+          <div class="field-label-row">
+            <span class="field-label">日期类型</span>
+            <div class="segmented-control" role="group" aria-label="日期类型">
+              <button class="segment is-active" data-date-type="lunar" type="button">农历</button>
+              <button class="segment" data-date-type="solar" type="button">公历</button>
+            </div>
+          </div>
+          <input type="hidden" name="dateType" value="lunar" />
+
+          <div class="form-row lunar-fields">
+            <div>
+              <label class="field-label" for="lunar-month">月份</label>
+              <select class="text-input" id="lunar-month" name="month">
+                <option>正月</option><option>二月</option><option>三月</option><option>四月</option><option>五月</option><option>六月</option><option>七月</option><option>八月</option><option>九月</option><option>十月</option><option>冬月</option><option>腊月</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="lunar-day">日期</label>
+              <select class="text-input" id="lunar-day" name="day">
+                <option>初一</option><option>初二</option><option>初三</option><option>初四</option><option>初五</option><option>初六</option><option>初七</option><option>初八</option><option>初九</option><option>初十</option><option>十一</option><option>十二</option><option>十三</option><option>十四</option><option>十五</option><option>十六</option><option>十七</option><option>十八</option><option>十九</option><option>二十</option><option>廿一</option><option>廿二</option><option>廿三</option><option>廿四</option><option>廿五</option><option>廿六</option><option>廿七</option><option>廿八</option><option>廿九</option><option>三十</option>
+              </select>
+            </div>
+          </div>
+          <div class="solar-fields" hidden>
+            <label class="field-label" for="solar-date">日期</label>
+            <input class="text-input" id="solar-date" type="date" name="solarDate" />
+          </div>
+
+          <label class="field-label" for="event-note">备注 <span>可选</span></label>
+          <textarea class="text-input textarea" id="event-note" name="note" rows="2" placeholder="写一点提醒自己的话"></textarea>
+
+          <div class="modal-actions">
+            <button class="secondary-button" id="cancel-modal" type="button">取消</button>
+            <button class="primary-button" type="submit">保存日期</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
