@@ -8,6 +8,12 @@ const JSON_HEADERS = {
 
 const CALENDAR_PREFIX = 'calendar:';
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const LUNAR_MONTHS = ['正月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '冬月', '腊月'];
+const LUNAR_DAYS = {
+  初一: 1, 初二: 2, 初三: 3, 初四: 4, 初五: 5, 初六: 6, 初七: 7, 初八: 8, 初九: 9, 初十: 10,
+  十一: 11, 十二: 12, 十三: 13, 十四: 14, 十五: 15, 十六: 16, 十七: 17, 十八: 18, 十九: 19, 二十: 20,
+  廿一: 21, 廿二: 22, 廿三: 23, 廿四: 24, 廿五: 25, 廿六: 26, 廿七: 27, 廿八: 28, 廿九: 29, 三十: 30,
+};
 
 export default {
   async fetch(request, env) {
@@ -139,20 +145,24 @@ function makeIcs(calendar) {
     'X-WR-TIMEZONE:Asia/Shanghai',
   ];
 
-  for (const event of calendar.events.filter((item) => item.date && DATE_PATTERN.test(item.date))) {
-    const start = toIcsDate(event.date);
-    const end = toIcsDate(addDays(event.date, 1));
-    const description = [event.note, event.dateType === 'lunar' ? `农历${event.lunarMonth || ''}${event.lunarDay || ''}` : ''].filter(Boolean).join(' · ');
-    lines.push(
-      'BEGIN:VEVENT',
-      `UID:${event.id}@suishi-calendar`,
-      `DTSTAMP:${stamp}`,
-      `DTSTART;VALUE=DATE:${start}`,
-      `DTEND;VALUE=DATE:${end}`,
-      `SUMMARY:${escapeIcs(event.name)}`,
-      description ? `DESCRIPTION:${escapeIcs(description)}` : '',
-      'END:VEVENT',
-    );
+  for (const event of calendar.events) {
+    const occurrences = eventOccurrences(event);
+    for (const occurrence of occurrences) {
+      const start = toIcsDate(occurrence.date);
+      const end = toIcsDate(addDays(occurrence.date, 1));
+      const description = [event.note, event.dateType === 'lunar' ? `农历${event.lunarMonth || ''}${event.lunarDay || ''}` : ''].filter(Boolean).join(' · ');
+      lines.push(
+        'BEGIN:VEVENT',
+        `UID:${event.id}-${occurrence.date}@suishi-calendar`,
+        `DTSTAMP:${stamp}`,
+        `DTSTART;VALUE=DATE:${start}`,
+        `DTEND;VALUE=DATE:${end}`,
+        `SUMMARY:${escapeIcs(event.name)}`,
+        event.repeatAnnual && event.dateType === 'solar' ? 'RRULE:FREQ=YEARLY' : '',
+        description ? `DESCRIPTION:${escapeIcs(description)}` : '',
+        'END:VEVENT',
+      );
+    }
   }
 
   lines.push('END:VCALENDAR');
@@ -164,7 +174,11 @@ function normalizeEvent(input) {
   if (!name) throw new Error('日期名称不能为空。');
 
   const dateType = ['lunar', 'solar', 'holiday'].includes(input.dateType) ? input.dateType : 'solar';
-  const date = typeof input.date === 'string' && DATE_PATTERN.test(input.date) ? input.date : null;
+  const suppliedDate = typeof input.date === 'string' && DATE_PATTERN.test(input.date) ? input.date : null;
+  const lunarMonth = cleanText(input.lunarMonth || input.month, 20);
+  const lunarDay = cleanText(input.lunarDay || input.day, 20);
+  const lunarLeap = Boolean(input.lunarLeap || input.isLeapMonth);
+  const date = dateType === 'lunar' ? lunarToSolar(new Date().getUTCFullYear(), lunarMonth, lunarDay, lunarLeap) : suppliedDate;
   if (dateType !== 'lunar' && !date) throw new Error('公历日期格式不正确。');
 
   return {
@@ -172,12 +186,47 @@ function normalizeEvent(input) {
     name,
     dateType,
     date,
-    lunarMonth: cleanText(input.lunarMonth || input.month, 20),
-    lunarDay: cleanText(input.lunarDay || input.day, 20),
+    lunarMonth,
+    lunarDay,
+    lunarLeap,
+    repeatAnnual: input.repeatAnnual === undefined ? dateType === 'solar' : Boolean(input.repeatAnnual),
     note: cleanText(input.note, 240),
     tag: cleanText(input.tag, 40) || (dateType === 'lunar' ? '农历生日' : dateType === 'holiday' ? '法定节假日' : '公历日期'),
     updatedAt: new Date().toISOString(),
   };
+}
+
+function eventOccurrences(event) {
+  if (event.dateType === 'lunar' && event.lunarMonth && event.lunarDay) {
+    const year = new Date().getUTCFullYear();
+    return Array.from({ length: 10 }, (_, index) => lunarToSolar(year + index, event.lunarMonth, event.lunarDay, event.lunarLeap))
+      .filter(Boolean)
+      .map((date) => ({ date }));
+  }
+  if (event.date && DATE_PATTERN.test(event.date)) return [{ date: event.date }];
+  return [];
+}
+
+function lunarToSolar(year, monthName, dayName, leapMonth = false) {
+  const targetMonth = LUNAR_MONTHS.indexOf(String(monthName).replace(/^闰/, '')) + 1;
+  const targetDay = LUNAR_DAYS[dayName] || Number(dayName);
+  if (!targetMonth || !targetDay || targetDay > 30) return null;
+
+  const formatter = new Intl.DateTimeFormat('zh-CN-u-ca-chinese', { month: 'long', day: 'numeric' });
+  const cursor = new Date(Date.UTC(year, 0, 1, 12));
+  for (let offset = 0; offset < 370; offset += 1) {
+    const date = new Date(cursor);
+    date.setUTCDate(date.getUTCDate() + offset);
+    const parts = formatter.formatToParts(date);
+    const month = parts.find((part) => part.type === 'month')?.value || '';
+    const day = Number(parts.find((part) => part.type === 'day')?.value);
+    const isLeapMonth = month.startsWith('闰');
+    const normalizedMonth = month.replace(/^闰/, '');
+    if (LUNAR_MONTHS.indexOf(normalizedMonth) + 1 === targetMonth && day === targetDay && isLeapMonth === leapMonth) {
+      return date.toISOString().slice(0, 10);
+    }
+  }
+  return null;
 }
 
 async function getCalendar(env, token) {
