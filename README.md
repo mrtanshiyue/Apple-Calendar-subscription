@@ -22,7 +22,7 @@ npx serve .
 
 ```bash
 npm install
-npx wrangler deploy
+npx wrangler deploy --config wrangler.worker.jsonc
 ```
 
 Worker 默认名称是 `suishi-calendar-api`，日历订阅接口为 `/api/calendar/{token}.ics`。
