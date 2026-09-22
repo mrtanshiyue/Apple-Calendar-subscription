@@ -8,7 +8,7 @@ const JSON_HEADERS = {
 
 const CALENDAR_PREFIX = 'calendar:';
 const CALENDAR_VERSION = 5;
-const CHINA_SOURCE_CACHE_KEY = 'source:china-holidays:v2';
+const CHINA_SOURCE_CACHE_KEY = 'source:china-holidays:v3';
 const CHINA_SOURCE_URL = 'https://cdn.jsdelivr.net/npm/chinese-days/dist/holidays.ics';
 const CHINA_SOURCE_CACHE_MS = 12 * 60 * 60 * 1000;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
